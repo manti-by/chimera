@@ -10,8 +10,12 @@ Chimera is an AI-powered coding workflow orchestration tool that coordinates mul
 - `chimera/models/context.py`: Context dataclass for agent state management
 - `chimera/services/opencode.py`: OpenCode plan and build agent integrations
 - `chimera/services/coderabbit.py`: CodeRabbit review agent integration
-- `chimera/services/linear.py`: Linear MCP configuration
+- `chimera/services/linear.py`: Linear GraphQL API integration
 - `chimera/services/filesystem.py`: Project filesystem utilities
+- `chimera/services/graphql.py`: GraphQL client utilities
+- `chimera/services/prompt.py`: Prompt template loading
+- `chimera/services/prompts/`: System and workflow prompt templates
+- `chimera/services/queries/`: GraphQL query templates
 - `main.py`: Entry point and supervisor agent orchestration
 - `opencode.json`: OpenCode LSP configuration
 
@@ -64,7 +68,7 @@ uv run pre-commit autoupdate
 
 ```bash
 make run-odin   # Run workflow on 'odin' project
-make check       # Run type checking and pre-commit checks
+make check      # Run type checking and pre-commit checks
 make pip        # Install dependencies
 make update     # Upgrade dependencies and pre-commit hooks
 make ci         # Shorthand: pip check test
@@ -117,9 +121,11 @@ Environment is controlled primarily via `chimera/settings.py` and `.env`:
 
 - `PROJECTS_PATH`: Base path for projects directory
 - `LINEAR_API_KEY`: API key for Linear integration
+- `LINEAR_API_URL`: Linear GraphQL API URL
+- `LINEAR_TEAM_ID`: Linear team ID
 - `OPENCODE_PATH`: Path to OpenCode CLI binary
 - `CODERABBIT_PATH`: Path to CodeRabbit CLI binary
-- `MISTRAL_API_KEY`: API key for Mistral AI
+- `GROQ_API_KEY`: API key for Groq (LLM)
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`: LangSmith tracing configuration
 - `HUGGINGFACEHUB_API_TOKEN`: HuggingFace API token
 
@@ -129,8 +135,8 @@ Chimera coordinates the following external tools:
 
 - **OpenCode**: AI coding assistant for planning and building features
 - **CodeRabbit**: AI-powered code review tool
-- **Linear MCP**: Issue tracking via Model Context Protocol
-- **Mistral AI**: LLM powering the supervisor agent
+- **Linear**: Issue tracking via GraphQL API
+- **Groq**: LLM powering the supervisor agent (Llama 3.1 8B)
 
 ## Security Guidelines
 
