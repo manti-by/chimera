@@ -14,31 +14,31 @@ Chimera is an AI-powered coding workflow orchestration tool that coordinates mul
 
 ```
 User Request
-     │
-     ▼
+      │
+      ▼
 ┌─────────────────────────────────┐
-│         Supervisor Agent        │  (Mistral AI)
-│  (Chimera Main Controller)      │
+│         Supervisor Agent        │  (Groq - Llama 3.1 8B)
+│   (Chimera Main Controller)     │
 └───────────┬─────────────────────┘
             │
-    ┌───────┼───────┬───────────────┐
-    │       │       │               │
-    ▼       ▼       ▼               ▼
-┌──────┐ ┌──────┐ ┌──────┐      Linear
-│Plan  │ │Build │ │Review│      MCP API
+    ┌───────┼───────┬────────────────┐
+    │       │       │                │
+    ▼      ▼       ▼                ▼
+┌──────┐ ┌──────┐ ┌──────┐         Linear
+│Plan  │ │Build │ │Review│      GraphQL API
 │Agent │ │Agent │ │Agent │
-└──┬───┘ └──┬───┘ └──┬───┘
+└┬─────┘ └──┬───┘ └──┬───┘
    │        │        │
-   ▼        ▼        ▼
+   ▼       ▼       ▼
 ┌─────────────────────────────────┐
-│           OpenCode             │
-│   (Planning & Building Tasks)  │
+│            OpenCode             │
+│    (Planning & Building Tasks)  │
 └─────────────────────────────────┘
            │
            ▼
 ┌─────────────────────────────────┐
-│          CodeRabbit            │
-│      (Code Review Agent)       │
+│           CodeRabbit            │
+│       (Code Review Agent)       │
 └─────────────────────────────────┘
 ```
 
@@ -54,8 +54,8 @@ User Request
 ## Requirements
 
 - Python 3.13
-- Mistral API key
-- Linear API key
+- Groq API key
+- Linear API key and Team ID
 - OpenCode CLI
 - CodeRabbit CLI
 - LangSmith API key (for tracing)
@@ -72,13 +72,15 @@ Configure the following environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PROJECTS_PATH` | Path to projects directory | `/home/manti/www` |
+| `PROJECTS_PATH` | Path to projects directory | `$HOME/www` |
 | `LINEAR_API_KEY` | Linear API key | - |
-| `OPENCODE_PATH` | Path to OpenCode binary | `/home/manti/.opencode/bin/opencode` |
-| `CODERABBIT_PATH` | Path to CodeRabbit binary | `/home/manti/.local/bin/coderabbit` |
+| `LINEAR_API_URL` | Linear GraphQL API URL | `https://api.linear.app/graphql` |
+| `LINEAR_TEAM_ID` | Linear team ID | - |
+| `OPENCODE_PATH` | Path to OpenCode binary | `$HOME/.opencode/bin/opencode` |
+| `CODERABBIT_PATH` | Path to CodeRabbit binary | `$HOME/.local/bin/coderabbit` |
 | `LANGSMITH_TRACING` | Enable LangSmith tracing | - |
 | `LANGSMITH_API_KEY` | LangSmith API key | - |
-| `MISTRAL_API_KEY` | Mistral API key | - |
+| `GROQ_API_KEY` | Groq API key | - |
 | `HUGGINGFACEHUB_API_TOKEN` | HuggingFace token | - |
 
 ## Usage
@@ -114,15 +116,22 @@ make ci
 chimera/
 ├── __init__.py
 ├── models/
-│   └── context.py          # Context dataclass for agent state
+│   └── context.py              # Context dataclass for agent state
 ├── services/
 │   ├── __init__.py
-│   ├── coderabbit.py       # CodeRabbit review agent integration
-│   ├── filesystem.py       # Project filesystem utilities
-│   ├── linear.py           # Linear MCP configuration
-│   └── opencode.py         # OpenCode plan/build agents
-├── settings.py             # Settings and configuration
-└── main.py                # Entry point and supervisor agent
+│   ├── coderabbit.py           # CodeRabbit review agent integration
+│   ├── filesystem.py           # Project filesystem utilities
+│   ├── graphql.py              # GraphQL client for Linear API
+│   ├── linear.py               # Linear task retrieval
+│   ├── opencode.py             # OpenCode plan/build agents
+│   ├── prompt.py               # Prompt template loading
+│   ├── prompts/
+│   │   ├── system.md           # System prompt for supervisor
+│   │   └── workflow.md         # Workflow template
+│   └── queries/
+│       └── get_todo_issues.gql # GraphQL query for Linear issues
+├── settings.py                 # Settings and configuration
+└── main.py                     # Entry point and supervisor agent
 ```
 
 ## Dependencies
@@ -130,9 +139,10 @@ chimera/
 ### Core
 - `asyncio` - Asynchronous programming
 - `deepagents` - Agent framework
-- `langchain-mcp-adapters` - MCP adapters for LangChain
-- `langchain-mistralai` - Mistral AI integration
-- `langchain[huggingface]` - LangChain with HuggingFace
+- `aiofiles` - Async file operations
+- `aiohttp` - Async HTTP client
+- `langchain-groq` - Groq integration
+- `mcp` - Model Context Protocol
 
 ### Development
 - `ipython` - Interactive Python
@@ -140,6 +150,12 @@ chimera/
 - `pre-commit` - Git hooks
 - `uv-bump` - Version bumping
 
+## CI/CD
+
+This project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/checks.yml` and runs:
+- Dependency installation
+- Pre-commit hooks on all files
+
 ## License
 
-MIT
+BSD 3-Clause License
