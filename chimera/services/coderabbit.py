@@ -1,4 +1,4 @@
-import subprocess  # nosec
+import asyncio
 from pathlib import Path
 
 from langchain.tools import ToolRuntime, tool
@@ -7,17 +7,16 @@ from chimera.models.context import Context
 from chimera.settings import CODERABBIT_PATH
 
 
-@tool("review-agent", description="Used to review changed code more in depth")
-async def review_agent(query: str, runtime: ToolRuntime[Context]):
+@tool("review-agent", description="Coderabbit agent used to review changed code more in depth")
+async def review_agent(task: str, runtime: ToolRuntime[Context]):
     project_path = runtime.context.project_path
-    return run_coderabbit_agent(project_path, query)
+    return await run_coderabbit_agent(project_path, task)
 
 
-def run_coderabbit_agent(project_path: Path, query: str) -> str:
-    result = subprocess.run(
-        [CODERABBIT_PATH, "review", "--prompt-only", "--no-color", "--type", "uncommitted", query],  # nosec
-        cwd=project_path,
-        capture_output=True,
-        text=True,
+async def run_coderabbit_agent(project_path: Path, task: str) -> str:
+    call = [CODERABBIT_PATH, "review", "--prompt-only", "--no-color", "--type", "uncommitted", task]
+    proc = await asyncio.create_subprocess_exec(
+        *call, cwd=project_path, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
     )
-    return result.stdout
+    stdout, _ = await proc.communicate()
+    return stdout.decode()

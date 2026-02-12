@@ -1,6 +1,9 @@
 run-odin:
 	uv run main.py --project-name odin
 
+run-coruscant:
+	uv run main.py --project-name coruscant
+
 check:
 	git add .
 	uv run ty check
