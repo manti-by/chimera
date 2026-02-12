@@ -2,9 +2,11 @@ import argparse
 import asyncio
 
 from deepagents import create_deep_agent
+from langchain.messages import AIMessageChunk, ToolMessage
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
+from langgraph_sdk.schema import Interrupt
 
 from chimera.models.context import Context
 from chimera.services.coderabbit import review_agent
@@ -20,9 +22,9 @@ parser.add_argument("-p", "--project-name", help="Project name to run workflow o
 chat_model = ChatGroq(model="llama-3.1-8b-instant", temperature=0.3, max_tokens=512, max_retries=2)
 
 
-async def handle_interrupt(interrupt_data: dict) -> list[dict]:
-    action_requests = interrupt_data.get("action_requests", [])
-    review_configs = interrupt_data.get("review_configs", [])
+async def handle_interrupt(interrupt_data: Interrupt) -> list[dict]:
+    action_requests = interrupt_data["value"].get("action_requests", [])
+    review_configs = interrupt_data["value"].get("review_configs", [])
     config_map = {cfg["action_name"]: cfg for cfg in review_configs}
 
     print("\n" + "=" * 50)
@@ -89,37 +91,54 @@ async def get_edited_args(action_name: str) -> dict:
     return args
 
 
-async def run_with_hitl(agent, input_data: dict, config: dict, context: Context):
-    result = None
+async def run_with_hitl(agent, payload: dict, config: dict, context: Context):
     while True:
-        if result is None:
-            async for message in agent.astream(input_data, config=config, context=context):
-                if isinstance(message, dict) and "__interrupt__" in message:
-                    interrupt_data = message["__interrupt__"][0].value
-                    decisions = await handle_interrupt(interrupt_data)
-                    result = agent.invoke(
+        async for step_type, data in agent.astream(
+            payload,
+            config=config,
+            context=context,
+            stream_mode=["messages", "updates"],
+        ):
+            if step_type == "messages":
+                message, metadata = data
+                if isinstance(message, ToolMessage) and message.name == "linear-task":
+                    print()
+                    print(f"Linear Task:\n\n{message.content}")
+                    print("-" * 50)
+                    continue
+
+                if isinstance(message, AIMessageChunk):
+                    print()
+                    print(f"Call node:\n{metadata}")
+                    print("-" * 50)
+                    continue
+
+                print()
+                print(f"Unknown message type: {data}")
+                print("-" * 50)
+                continue
+
+            elif step_type == "updates":
+                if "__interrupt__" in data:
+                    decisions = await handle_interrupt(interrupt_data=data["__interrupt__"][0])
+                    agent.invoke(
                         Command(resume={"decisions": decisions}),
                         config=config,
+                        context=context,
                     )
-                else:
-                    print(message)
-        else:
-            if "__interrupt__" in result:
-                interrupt_data = result["__interrupt__"][0].value
-                decisions = await handle_interrupt(interrupt_data)
-                result = agent.invoke(
-                    Command(resume={"decisions": decisions}),
-                    config=config,
-                )
-            else:
-                break
+                    continue
 
-    return result
+                print()
+                print(f"Unknown update type: {data}")
+                print("-" * 50)
+                continue
+
+            print()
+            print(f"Unknown step type: {data}")
+            print("-" * 50)
 
 
 async def main(project_name: str):
-    project_path = get_project_root(project_name)
-
     system_prompt = await get_prompt(name="system")
     supervisor_agent = create_deep_agent(
         chat_model,
@@ -136,16 +155,15 @@ async def main(project_name: str):
         checkpointer=MemorySaver(),
     )
 
+    query = await get_prompt(name="workflow", project_name=project_name)
+    payload = {"messages": [{"role": "user", "content": query}]}
+
+    config = {"configurable": {"thread_id": "conversation_1"}}
+
+    project_path = get_project_root(project_name)
     context = Context(project_name=project_name, project_path=project_path)
 
-    query = await get_prompt(name="workflow", project_name=project_name)
-    config = {"configurable": {"thread_id": "conversation_1"}}
-    await run_with_hitl(
-        supervisor_agent,
-        {"messages": [{"role": "user", "content": query}]},
-        config,
-        context,
-    )
+    await run_with_hitl(agent=supervisor_agent, payload=payload, config=config, context=context)
 
 
 if __name__ == "__main__":
