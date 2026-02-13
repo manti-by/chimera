@@ -1,12 +1,12 @@
 import argparse
 import asyncio
+import shutil
 
 from deepagents import create_deep_agent
 from langchain.messages import AIMessageChunk, ToolMessage
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.types import Command
-from langgraph_sdk.schema import Interrupt
+from langgraph.types import Command, Interrupt
 
 from chimera.models.context import Context
 from chimera.services.coderabbit import review_agent
@@ -22,9 +22,17 @@ parser.add_argument("-p", "--project-name", help="Project name to run workflow o
 chat_model = ChatGroq(model="llama-3.1-8b-instant", temperature=0.3, max_tokens=512, max_retries=2)
 
 
+async def print_message(message: str):
+    COLOR, ENDC = "\x1b[2m", "\033[0m"
+    size = shutil.get_terminal_size((80, 20))
+
+    print(f"\n{message}\n")
+    print(COLOR + "-" * size.columns + ENDC)
+
+
 async def handle_interrupt(interrupt_data: Interrupt) -> list[dict]:
-    action_requests = interrupt_data["value"].get("action_requests", [])
-    review_configs = interrupt_data["value"].get("review_configs", [])
+    action_requests = interrupt_data.value.get("action_requests", [])
+    review_configs = interrupt_data.value.get("review_configs", [])
     config_map = {cfg["action_name"]: cfg for cfg in review_configs}
 
     print("\n" + "=" * 50)
@@ -101,41 +109,32 @@ async def run_with_hitl(agent, payload: dict, config: dict, context: Context):
         ):
             if step_type == "messages":
                 message, metadata = data
-                if isinstance(message, ToolMessage) and message.name == "linear-task":
-                    print()
-                    print(f"Linear Task:\n\n{message.content}")
-                    print("-" * 50)
-                    continue
+                if isinstance(message, ToolMessage):
+                    if message.name in ["linear-task", "plan-agent", "build-agent", "review-agent"]:
+                        await print_message(f"{message.name}:\n\n{message.content}")
+                        continue
 
                 if isinstance(message, AIMessageChunk):
-                    print()
-                    print(f"Call node:\n{metadata}")
-                    print("-" * 50)
+                    await print_message(f"Call node:\n{metadata}")
                     continue
 
-                print()
-                print(f"Unknown message type: {data}")
-                print("-" * 50)
+                await print_message(f"Unknown message:\n{message}\n{metadata}")
                 continue
 
             elif step_type == "updates":
                 if "__interrupt__" in data:
                     decisions = await handle_interrupt(interrupt_data=data["__interrupt__"][0])
-                    agent.invoke(
+                    await agent.ainvoke(
                         Command(resume={"decisions": decisions}),
                         config=config,
                         context=context,
                     )
                     continue
 
-                print()
-                print(f"Unknown update type: {data}")
-                print("-" * 50)
+                await print_message(f"Update: {data.keys()}")
                 continue
 
-            print()
-            print(f"Unknown step type: {data}")
-            print("-" * 50)
+            await print_message(f"Unknown step {step_type}: {data}")
 
 
 async def main(project_name: str):
