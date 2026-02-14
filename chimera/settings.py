@@ -14,6 +14,8 @@ LINEAR_TEAM_ID = os.environ.get("LINEAR_TEAM_ID")
 OPENCODE_PATH = Path(os.environ.get("OPENCODE_PATH", HOME_PATH / ".opencode/bin/opencode"))
 OPENCODE_MODEL = os.environ.get("OPENCODE_MODEL", "opencode/minimax-m2.5")
 
+CURSOR_PATH = Path(os.environ.get("CURSOR_PATH", HOME_PATH / ".local/bin/cursor-agent"))
+
 CODERABBIT_PATH = Path(os.environ.get("CODERABBIT_PATH", HOME_PATH / ".local/bin/coderabbit"))
 
 GIT_PATH = Path(os.environ.get("GIT_PATH", "/usr/bin/git"))

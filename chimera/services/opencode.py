@@ -1,11 +1,10 @@
-import asyncio
 import shlex
 from pathlib import Path
 
 from langchain.tools import ToolRuntime, tool
 
 from chimera.models import Context
-from chimera.services.utils import live_stream
+from chimera.services.subprocess import run_command
 from chimera.settings import OPENCODE_MODEL, OPENCODE_PATH
 
 
@@ -28,19 +27,8 @@ async def build_agent(task: str, runtime: ToolRuntime[Context], repeat: bool = F
 
 
 async def run_opencode_agent(target_path: Path, task: str, repeat: bool = False, agent: str = "plan") -> str:
-    call = [OPENCODE_PATH, "run", "--model", OPENCODE_MODEL, "--agent", agent]
+    command = [OPENCODE_PATH, "run", "--model", OPENCODE_MODEL, "--agent", agent]
     if repeat:
-        call.append("--continue")
-    call.append(shlex.quote(task))
-
-    process = await asyncio.create_subprocess_exec(
-        *call, cwd=target_path, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-    )
-    if not process.stdout or not process.stderr:
-        process.kill()
-        raise AttributeError("stdout/stderr is None")
-
-    result = []
-    await asyncio.gather(live_stream(process.stdout, result=result), live_stream(process.stderr))
-    await process.wait()
-    return "".join(result)
+        command.append("--continue")
+    command.append(shlex.quote(task))
+    return await run_command(command=command, target_path=target_path)
