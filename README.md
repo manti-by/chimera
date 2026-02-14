@@ -2,6 +2,10 @@
 
 Chimera is an AI-powered coding workflow orchestration tool that coordinates multiple AI coding agents to automate software development tasks. It acts as a supervisor agent that integrates with Linear (issue tracking), OpenCode (feature planning and building), and CodeRabbit (code review) to create a seamless development workflow.
 
+## History
+
+This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a supervisor agent architecture powered by LangChain and Groq.
+
 ## Features
 
 - **Supervisor Agent**: Orchestrates the entire development workflow
