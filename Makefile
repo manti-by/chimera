@@ -1,15 +1,12 @@
 run-odin:
 	uv run main.py --project-name odin
 
-run-coruscant:
-	uv run main.py --project-name coruscant
-
 check:
 	git add .
 	uv run ty check
 	uv run pre-commit run
 
-pip:
+install:
 	uv sync --all-extras --dev
 
 update:
@@ -17,4 +14,7 @@ update:
 	uv sync --all-extras --dev
 	uv run pre-commit autoupdate
 
-ci: pip check
+migrate:
+	alembic upgrade head
+
+ci: install check

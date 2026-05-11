@@ -1,22 +1,48 @@
-# AGENTS.md
+# DOCS.md
 
 ## Project Overview
 
 Chimera is an AI-powered coding workflow orchestration tool that coordinates multiple AI coding agents to automate software development tasks. It acts as a supervisor agent that integrates with Linear (issue tracking), OpenCode (feature planning and building), and CodeRabbit (code review) to create a seamless development workflow.
 
+## History
+
+This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a supervisor agent architecture powered by LangChain and Groq.
+
+## Requirements
+
+- Python 3.13
+- Groq API key
+- Linear API key and Team ID
+- OpenCode CLI
+- CodeRabbit CLI
+- LangSmith API key (for tracing)
+
 ## Project Structure
 
+- `main.py`: Entry point and supervisor agent orchestration
 - `chimera/settings.py`: Core configuration and environment variables
-- `chimera/models/context.py`: Context dataclass for agent state management
+- `chimera/library/`: Core models and shared utilities
+- `chimera/library/models.py`: Data models
+- `chimera/library/types.py`: Type definitions
+- `chimera/library/parser.py`: CLI argument parsing
+- `chimera/services/`: Service integrations
+- `chimera/services/linear.py`: Linear GraphQL API integration
 - `chimera/services/opencode.py`: OpenCode plan and build agent integrations
 - `chimera/services/coderabbit.py`: CodeRabbit review agent integration
-- `chimera/services/linear.py`: Linear GraphQL API integration
-- `chimera/services/filesystem.py`: Project filesystem utilities
+- `chimera/services/github.py`: GitHub API integration
+- `chimera/services/git.py`: Git operations
 - `chimera/services/graphql.py`: GraphQL client utilities
+- `chimera/services/filesystem.py`: Project filesystem utilities
+- `chimera/services/database.py`: Database operations
+- `chimera/services/encryption.py`: Encryption utilities
+- `chimera/services/flow.py`: Workflow orchestration
+- `chimera/services/lint.py`: Linting integration
+- `chimera/services/test.py`: Testing integration
 - `chimera/services/prompt.py`: Prompt template loading
-- `chimera/services/prompts/`: System and workflow prompt templates
-- `chimera/services/queries/`: GraphQL query templates
-- `main.py`: Entry point and supervisor agent orchestration
+- `chimera/services/subprocess.py`: Subprocess management
+- `chimera/services/terminal.py`: Terminal utilities
+- `chimera/services/utils.py`: General utilities
+- `chimera/prompts/`: System and workflow prompt templates
 - `opencode.json`: OpenCode LSP configuration
 
 ## Git Workflow
@@ -69,9 +95,9 @@ uv run pre-commit autoupdate
 ```bash
 make run-odin   # Run workflow on 'odin' project
 make check      # Run type checking and pre-commit checks
-make pip        # Install dependencies
+make install    # Install dependencies
 make update     # Upgrade dependencies and pre-commit hooks
-make ci         # Shorthand: pip check test
+make ci         # Shorthand: install check
 ```
 
 ### Running Modules
@@ -98,7 +124,6 @@ uv run main.py --project-name <project_name>
 Configured in `pyproject.toml`:
 
 - **Ruff** for linting and import management (`[tool.ruff]`, `[tool.ruff.lint]`)
-- **Bandit** for basic security checks (`[tool.bandit]`)
 - **pre-commit** is used to run the tools before commits
 - **ty** for type checking
 
@@ -108,7 +133,6 @@ Run manually:
 uv run pre-commit run --all-files
 uv run ruff check .
 uv run ty check
-uv run bandit -c pyproject.toml .
 ```
 
 ## Testing Guidelines
@@ -127,7 +151,6 @@ Environment is controlled primarily via `chimera/settings.py` and `.env`:
 - `CODERABBIT_PATH`: Path to CodeRabbit CLI binary
 - `GROQ_API_KEY`: API key for Groq (LLM)
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`: LangSmith tracing configuration
-- `HUGGINGFACEHUB_API_TOKEN`: HuggingFace API token
 
 ## External Dependencies
 
@@ -138,11 +161,37 @@ Chimera coordinates the following external tools:
 - **Linear**: Issue tracking via GraphQL API
 - **Groq**: LLM powering the supervisor agent (Llama 3.1 8B)
 
+## Dependencies
+
+### Core
+- `aiofiles` - Async file operations
+- `aiohttp` - Async HTTP client
+- `asyncio` - Asynchronous programming
+- `deepagents` - Agent framework
+- `langchain-groq` - Groq integration
+- `langchain-mcp-adapters` - MCP adapters
+- `langsmith` - LangSmith tracing
+- `mcp` - Model Context Protocol
+- `python-slugify` - Slugify utility
+- `rich` - Rich terminal output
+- `sqlalchemy` - Database ORM
+
+### Development
+- `ipython` - Interactive Python
+- `ty` - Python type checker
+- `pre-commit` - Git hooks
+- `uv-bump` - Version bumping
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/checks.yml` and runs:
+- Dependency installation
+- Pre-commit hooks on all files
+
 ## Security Guidelines
 
 - Never commit secrets, passwords, or API tokens
 - Configure sensitive values via environment variables
-- Run `bandit` periodically or in CI
 - Validate any external input before using it in system calls or network operations
 
 ## AI Behavior

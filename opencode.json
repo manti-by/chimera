@@ -8,5 +8,12 @@
       "command": ["uvx", "ty", "server"],
       "extensions": [".py", ".pyi"]
     }
+  },
+  "mcp": {
+    "langchain": {
+      "type": "remote",
+      "url": "https://docs.langchain.com/mcp",
+      "enabled": true
+    }
   }
 }

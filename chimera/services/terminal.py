@@ -1,9 +1,12 @@
-import aiofiles
+import logging.config
+
 from rich.console import Console
 from rich.text import Text
 
-from chimera.settings import BASE_PATH
+from chimera.library.header import header
 
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -16,21 +19,26 @@ def print_message(message: str, style: str | None = None):
         console.print("→ ", style="bold bright_green", end="")
         console.print(message, style="white")
     elif style == "info":
+        console.print()
         console.print(message, style="bright_black")
     elif style == "error":
+        console.print()
         console.print(message, style="red")
+        if message.strip():
+            logger.error(message)
+            return
     else:
         console.print(message)
 
+    if message.strip():
+        logger.info(message)
+
 
 async def print_heading():
-    async with aiofiles.open(BASE_PATH / "chimera/services/tui/header.txt") as file:
-        text = await file.read()
-
-    text = Text(text)
-    text.stylize("magenta", 0, 250)
-    text.stylize("cyan", 250, 500)
-    text.stylize("blue", 500, 750)
+    text = Text(header)
+    text.stylize("magenta", 0, 150)
+    text.stylize("cyan", 150, 250)
+    text.stylize("blue", 250, 350)
 
     console.print()
     console.print(text, end="")
