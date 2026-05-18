@@ -1,6 +1,6 @@
 # Chimera
 
-AI-powered coding workflow orchestration tool that coordinates multiple AI agents (Linear, OpenCode, CodeRabbit) via a supervisor agent (Groq Llama 3.1 8B).
+AI-powered coding workflow orchestration tool that coordinates AI agents (Linear, OpenCode) via a supervisor agent (Groq Llama 3.1 8B) using LangGraph.
 
 ## Quick Start
 
@@ -17,13 +17,14 @@ User Request
       ▼
 ┌─────────────────────────────────┐
 │         Supervisor Agent        │  (Groq - Llama 3.1 8B)
+│          (LangGraph)            │
 └───────────┬─────────────────────┘
             │
     ┌───────┼───────┬────────────────┐
     │       │       │                │
     ▼      ▼       ▼                ▼
 ┌──────┐ ┌──────┐ ┌──────┐         Linear
-│Plan  │ │Build │ │Review│      GraphQL API
+│Plan  │ │Build │ │Review│        MCP API
 │Agent │ │Agent │ │Agent │
 └┬─────┘ └──┬───┘ └──┬───┘
    │        │        │
@@ -34,18 +35,19 @@ User Request
             │
             ▼
 ┌─────────────────────────────────┐
-│           CodeRabbit            │
+│      Git (worktree-based)       │
 └─────────────────────────────────┘
 ```
 
 ## Workflow
 
-1. **Task Retrieval**: Fetch task from Linear (TODO column)
+1. **Task Retrieval**: Fetch task from Linear via MCP
 2. **Planning**: Create implementation plan via OpenCode
-3. **User Approval**: Wait for user input
-4. **Building**: Implement feature using OpenCode
+3. **User Approval**: Wait for user input if questions arise
+4. **Building**: Implement feature using OpenCode in isolated worktree
 5. **Review**: Check with OpenCode review agent
-6. **Iteration**: Loop if issues found
+6. **Verification**: Run lint (ruff) and tests (pytest)
+7. **Commit & PR**: Create commit, push, and open PR
 
 ## Configuration
 
@@ -56,7 +58,6 @@ User Request
 | `LINEAR_TEAM_ID` | Linear team ID |
 | `GROQ_API_KEY` | Groq API key |
 | `OPENCODE_PATH` | OpenCode binary path |
-| `CODERABBIT_PATH` | CodeRabbit binary path |
 
 ## Make Commands
 

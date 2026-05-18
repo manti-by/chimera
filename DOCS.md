@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Chimera is an AI-powered coding workflow orchestration tool that coordinates multiple AI coding agents to automate software development tasks. It acts as a supervisor agent that integrates with Linear (issue tracking), OpenCode (feature planning and building), and CodeRabbit (code review) to create a seamless development workflow.
+Chimera is an AI-powered coding workflow orchestration tool that coordinates multiple AI coding agents to automate software development tasks. It acts as a supervisor agent using LangGraph that integrates with Linear (issue tracking via MCP), and OpenCode (feature planning and building) to create a seamless development workflow.
 
 ## History
 
-This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a supervisor agent architecture powered by LangChain and Groq.
+This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a supervisor agent architecture powered by LangChain, LangGraph, and Groq.
 
 ## Requirements
 
@@ -14,36 +14,50 @@ This project is the successor of [Demetra](https://github.com/manti-by/demetra),
 - Groq API key
 - Linear API key and Team ID
 - OpenCode CLI
-- CodeRabbit CLI
-- LangSmith API key (for tracing)
+- PostgreSQL database (for state persistence)
+- LangSmith API key (optional, for tracing)
 
 ## Project Structure
 
-- `main.py`: Entry point and supervisor agent orchestration
-- `chimera/settings.py`: Core configuration and environment variables
-- `chimera/library/`: Core models and shared utilities
-- `chimera/library/models.py`: Data models
-- `chimera/library/types.py`: Type definitions
-- `chimera/library/parser.py`: CLI argument parsing
-- `chimera/services/`: Service integrations
-- `chimera/services/linear.py`: Linear GraphQL API integration
-- `chimera/services/opencode.py`: OpenCode plan and build agent integrations
-- `chimera/services/coderabbit.py`: CodeRabbit review agent integration
-- `chimera/services/github.py`: GitHub API integration
-- `chimera/services/git.py`: Git operations
-- `chimera/services/graphql.py`: GraphQL client utilities
-- `chimera/services/filesystem.py`: Project filesystem utilities
-- `chimera/services/database.py`: Database operations
-- `chimera/services/encryption.py`: Encryption utilities
-- `chimera/services/flow.py`: Workflow orchestration
-- `chimera/services/lint.py`: Linting integration
-- `chimera/services/test.py`: Testing integration
-- `chimera/services/prompt.py`: Prompt template loading
-- `chimera/services/subprocess.py`: Subprocess management
-- `chimera/services/terminal.py`: Terminal utilities
-- `chimera/services/utils.py`: General utilities
-- `chimera/prompts/`: System and workflow prompt templates
-- `opencode.json`: OpenCode LSP configuration
+```
+chimera/
+├── main.py                 # Entry point
+├── workflow.py             # LangGraph workflow orchestration
+├── settings.py             # Core configuration
+├── library/                # Core models and utilities
+│   ├── models.py           # Data models (WorkflowState)
+│   ├── types.py            # Type definitions
+│   ├── parser.py           # CLI argument parsing
+│   ├── exceptions.py       # Custom exceptions
+│   ├── constants.py        # Constants
+│   ├── header.py           # Header formatting
+│   └── parser.py           # CLI parsing
+├── services/               # Service integrations
+│   ├── linear.py           # Linear MCP configuration
+│   ├── opencode.py         # OpenCode agent service
+│   ├── git.py              # Git operations
+│   ├── flow.py             # Workflow orchestration
+│   ├── prompt.py           # Prompt template loading
+│   ├── subprocess.py       # Subprocess management
+│   ├── terminal.py         # Terminal output utilities
+│   ├── utils.py            # General utilities
+│   ├── database.py         # Database operations
+│   └── project.py          # Project management
+├── tools/                  # LangGraph tool definitions
+│   ├── git.py              # Git tools (worktree, commit, push, etc.)
+│   ├── github.py           # GitHub PR creation
+│   ├── opencode.py         # OpenCode plan/build/review tools
+│   ├── lint.py             # Ruff lint and format tools
+│   └── test.py             # Pytest tool
+├── database/               # Database layer
+│   ├── connection.py       # SQLAlchemy async connection
+│   ├── tables.py           # Table definitions
+│   └── migrations/         # Alembic migrations
+└── prompts/                # System prompt templates
+    ├── system.md           # System prompt
+    ├── workflow.md         # Workflow instructions
+    └── review.md           # Review agent prompt
+```
 
 ## Git Workflow
 
@@ -137,7 +151,9 @@ uv run ty check
 
 ## Testing Guidelines
 
-- Use `pytest` for tests (currently no test directory, consider adding `tests/`)
+- Use `pytest` with `pytest-asyncio` for async tests
+- Tests are located in the `tests/` directory
+- Run tests with: `uv run pytest`
 
 ## Environment & Configuration
 
@@ -148,28 +164,30 @@ Environment is controlled primarily via `chimera/settings.py` and `.env`:
 - `LINEAR_API_URL`: Linear GraphQL API URL
 - `LINEAR_TEAM_ID`: Linear team ID
 - `OPENCODE_PATH`: Path to OpenCode CLI binary
-- `CODERABBIT_PATH`: Path to CodeRabbit CLI binary
 - `GROQ_API_KEY`: API key for Groq (LLM)
+- `GROQ_MODEL`: Groq model to use (default: llama-3.1-8b-instant)
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`: LangSmith tracing configuration
+- `DB_URL`: PostgreSQL database URL
 
 ## External Dependencies
 
 Chimera coordinates the following external tools:
 
 - **OpenCode**: AI coding assistant for planning and building features
-- **CodeRabbit**: AI-powered code review tool
-- **Linear**: Issue tracking via GraphQL API
+- **Linear**: Issue tracking via MCP API
 - **Groq**: LLM powering the supervisor agent (Llama 3.1 8B)
+- **Git**: Worktree-based feature development
 
 ## Dependencies
 
 ### Core
 - `aiofiles` - Async file operations
 - `aiohttp` - Async HTTP client
-- `asyncio` - Asynchronous programming
-- `deepagents` - Agent framework
+- `alembic` - Database migrations
+- `langchain` - LangChain framework
 - `langchain-groq` - Groq integration
 - `langchain-mcp-adapters` - MCP adapters
+- `langgraph` - LangGraph workflow orchestration
 - `langsmith` - LangSmith tracing
 - `mcp` - Model Context Protocol
 - `python-slugify` - Slugify utility
@@ -181,10 +199,13 @@ Chimera coordinates the following external tools:
 - `ty` - Python type checker
 - `pre-commit` - Git hooks
 - `uv-bump` - Version bumping
+- `pytest` - Testing framework
+- `pytest-asyncio` - Async test support
+- `psycopg` - PostgreSQL driver
 
 ## CI/CD
 
-This project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/checks.yml` and runs:
+This project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/chimera.yml` and runs:
 - Dependency installation
 - Pre-commit hooks on all files
 
