@@ -6,6 +6,9 @@ check:
 	uv run ty check
 	uv run pre-commit run
 
+test:
+	uv run pytest tests/
+
 install:
 	uv sync --all-extras --dev
 
@@ -17,4 +20,4 @@ update:
 migrate:
 	alembic upgrade head
 
-ci: install check
+ci: install check test

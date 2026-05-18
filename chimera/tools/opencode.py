@@ -20,12 +20,14 @@ async def plan_agent_tool(task: str, worktree_path: Path) -> tuple[int, str, str
         f"\nIMPORTANT:"
         f"\n- If you have some question about implementation, just print in the end `{PLAN_HAS_QUESTIONS}`"
         f"\n- If there are no questions, just print in the end `{PLAN_IS_READY_STRING}`"
+        f"\n- Keep your entire response under 4095 symbols (characters) to avoid truncation"
+        f"\n- Be concise and focus on the most critical design decisions"
     )
     return await run_opencode_agent(
         target_path=worktree_path,
         task=task,
         model=OPENCODE["plan_model"],
-        agent="plan",
+        agent="plan-agent",
     )
 
 
@@ -36,7 +38,7 @@ async def build_agent_tool(task: str, worktree_path: Path) -> tuple[int, str, st
         target_path=worktree_path,
         task=task,
         model=OPENCODE["build_model"],
-        agent="build",
+        agent="build-agent",
     )
 
 
@@ -50,7 +52,7 @@ async def review_agents_tool(worktree_path: Path, model: str) -> tuple[int, str,
                 target_path=worktree_path,
                 task=task,
                 model=model,
-                agent="build",
+                agent="review-agent",
             )
         )
     results = await asyncio.gather(*review_agents)

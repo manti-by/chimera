@@ -1,6 +1,6 @@
 [project]
 name = "chimera"
-version = "0.2.1"
+version = "0.3.0"
 description = "AI-powered coding workflow orchestration tool"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -26,6 +26,34 @@ dev = [
     "ty>=0.0.37",
     "pre-commit>=4.6.0",
     "uv-bump>=0.5.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-env>=1.1.0",
+    "psycopg>=3.2.0",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests/"]
+skips = ["B101", "B308", "B703"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "database: marks tests that require database connection",
+]
+env = [
+    "DB_URL=postgresql+asyncpg://chimera:chimera@localhost:5432/test_chimera",
 ]
 
 [tool.ruff]
@@ -97,6 +125,7 @@ lines-after-imports = 2
 # Ignore "RUF" (Ruff-specific rules) and "I" (isort) in migrations.
 "__init__.py" = ["E402", "F403", "F405"]
 "**/{settings}/*" = ["E402", "F403", "F405"]
+"tests/**" = ["S101", "S603", "N802"]
 
 [tool.ty.src]
 exclude = [
