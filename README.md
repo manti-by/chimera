@@ -1,6 +1,6 @@
 # Chimera
 
-AI-powered coding workflow orchestration tool that coordinates AI agents (Linear, OpenCode) via a supervisor agent (Groq Llama 3.1 8B) using LangGraph.
+AI-powered coding workflow orchestration tool that coordinates AI agents (Linear, OpenCode) via a supervisor agent (Groq llama-3.3-70b-versatile) using LangGraph.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ User Request
       │
       ▼
 ┌─────────────────────────────────┐
-│         Supervisor Agent        │  (Groq - Llama 3.1 8B)
+│         Supervisor Agent        │  (Groq - Llama 3.3 70b)
 │          (LangGraph)            │
 └───────────┬─────────────────────┘
             │
@@ -53,7 +53,6 @@ User Request
 
 | Variable | Description |
 |----------|-------------|
-| `PROJECTS_PATH` | Projects directory (`$HOME/www`) |
 | `LINEAR_API_KEY` | Linear API key |
 | `LINEAR_TEAM_ID` | Linear team ID |
 | `GROQ_API_KEY` | Groq API key |
@@ -62,9 +61,9 @@ User Request
 ## Make Commands
 
 ```bash
-make run-odin   # Run workflow on 'odin' project
-make check      # Run type checking & pre-commit
-make ci         # Full CI check
+make run-demetra  # Run workflow on 'demetra' project
+make check        # Run type checking & pre-commit
+make ci           # Full CI check
 ```
 
 ## More Info
@@ -73,4 +72,4 @@ See [DOCS.md](DOCS.md) for detailed developer documentation.
 
 ## License
 
-BSD 3-Clause License
+AGPL-3.0 license
