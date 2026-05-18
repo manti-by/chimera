@@ -43,8 +43,8 @@ User Request
 1. **Task Retrieval**: Fetch task from Linear (TODO column)
 2. **Planning**: Create implementation plan via OpenCode
 3. **User Approval**: Wait for user input
-4. **Building**: Implement feature via OpenCode
-5. **Review**: Check with CodeRabbit
+4. **Building**: Implement feature using OpenCode
+5. **Review**: Check with OpenCode review agent
 6. **Iteration**: Loop if issues found
 
 ## Configuration

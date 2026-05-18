@@ -71,7 +71,7 @@ GIT: GitConfig = {
 
 GROQ: GroqConfig = {
     "api_key": os.environ.get("GROQ_API_KEY"),
-    "model": os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant"),
+    "model": os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
 }
 
 GITHUB: dict[str, Path] = {

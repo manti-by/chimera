@@ -25,6 +25,7 @@ class WorkflowState:
     lint_errors: str | None = None
     test_errors: str | None = None
     pr_url: str | None = None
+    completed_steps: list[str] = field(default_factory=list)
 
     def update(self, updates: dict[str, Any]) -> "WorkflowState":
         for key, value in updates.items():
