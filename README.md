@@ -1,6 +1,19 @@
-# Chimera
+# Chimera v1.0.0
 
-AI-powered coding workflow orchestration tool that coordinates AI agents (Linear, OpenCode) via a supervisor agent (Groq llama-3.3-70b-versatile) using LangGraph.
+AI-powered coding workflow orchestration tool that coordinates multiple AI coding agents via a supervisor agent (Groq Llama 3.3 70b) using LangGraph.
+
+This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls and "classic" python
+step-by-step loops.
+
+## Key Features
+
+- **Supervisor Agent**: Orchestrates workflow using Groq Llama via LangGraph
+- **Multi-Agent System**: Plan, Build, and Review agents coordinated by supervisor
+- **Linear Integration**: Task retrieval via MCP API
+- **OpenCode Integration**: AI-powered planning and building in isolated Git worktrees
+- **Human-in-the-Loop**: User approval for questions during implementation
+- **Automated Workflow**: Task → Plan → Build → Review → Lint → Test → Commit → PR
+- **Database Persistence**: PostgreSQL with Alembic migrations
 
 ## Quick Start
 

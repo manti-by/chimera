@@ -1,4 +1,4 @@
-# DOCS.md
+# DOCS.md v1.0.0
 
 ## Project Overview
 
@@ -6,7 +6,33 @@ Chimera is an AI-powered coding workflow orchestration tool that coordinates mul
 
 ## History
 
-This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a supervisor agent architecture powered by LangChain, LangGraph, and Groq.
+This project is the successor of [Demetra](https://github.com/manti-by/demetra), a coding workflow orchestration tool that coordinated AI agents using async subprocess calls. Chimera builds on the same idea but with a graph agent architecture powered by LangChain, LangGraph, and Groq.
+
+### First Release (v0.3.2)
+
+The initial release includes:
+- Supervisor agent with LangGraph orchestration
+- Plan, Build, and Review agent system
+- Linear MCP integration for task retrieval
+- OpenCode integration for AI-powered development
+- Git worktree-based feature development
+- Human-in-the-loop middleware for user approval
+- PostgreSQL persistence with Alembic migrations
+- Full test coverage with pytest
+
+## Technical Stack
+
+| Component | Technology |
+|-----------|------------|
+| Language | Python 3.13 |
+| Orchestration | LangChain, LangGraph |
+| LLM | Groq (Llama 3.3 70b) |
+| Task Tracking | Linear MCP |
+| Coding Agent | OpenCode CLI |
+| Database | PostgreSQL + SQLAlchemy + Alembic |
+| Testing | pytest, pytest-asyncio |
+| Linting | Ruff |
+| Type Checking | ty |
 
 ## Requirements
 
@@ -159,7 +185,6 @@ uv run ty check
 
 Environment is controlled primarily via `chimera/settings.py` and `.env`:
 
-- `PROJECTS_PATH`: Base path for projects directory
 - `LINEAR_API_KEY`: API key for Linear integration
 - `LINEAR_API_URL`: Linear GraphQL API URL
 - `LINEAR_TEAM_ID`: Linear team ID
