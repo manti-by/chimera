@@ -1,6 +1,6 @@
 [project]
 name = "chimera"
-version = "0.2.0"
+version = "0.2.1"
 description = "AI-powered coding workflow orchestration tool"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -9,11 +9,11 @@ dependencies = [
     "aiohttp>=3.13.5",
     "alembic>=1.18.4",
     "asyncio>=4.0.0",
-    "langchain>=1.2.18",
+    "langchain>=1.3.1",
     "langchain-groq>=1.1.2",
     "langchain-mcp-adapters>=0.2.2",
-    "langgraph>=1.1.10",
-    "langsmith>=0.8.3",
+    "langgraph>=1.2.0",
+    "langsmith>=0.8.5",
     "mcp>=1.27.1",
     "python-slugify>=8.0.4",
     "rich>=15.0.0",
@@ -23,7 +23,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipython>=9.13.0",
-    "ty>=0.0.35",
+    "ty>=0.0.37",
     "pre-commit>=4.6.0",
     "uv-bump>=0.5.0",
 ]

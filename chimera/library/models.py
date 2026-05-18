@@ -2,9 +2,35 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
+from langchain_core.messages import BaseMessage
 from slugify import slugify
+
+
+@dataclass
+class WorkflowState:
+    messages: list[BaseMessage] = field(default_factory=list)
+    llm_calls: int = 0
+    project_name: str = ""
+    linear_task_id: str | None = None
+    branch_name: str | None = None
+    worktree_path: Path | None = None
+    implementation_plan: str | None = None
+    build_attempts: int = 0
+    review_attempts: int = 0
+    needs_rebuild: bool = True
+    needs_relint: bool = True
+    lint_errors: str | None = None
+    test_errors: str | None = None
+    pr_url: str | None = None
+
+    def update(self, updates: dict[str, Any]) -> "WorkflowState":
+        for key, value in updates.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        return self
 
 
 @dataclass

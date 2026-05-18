@@ -19,19 +19,22 @@ def print_message(message: str, style: str | None = None):
         console.print("→ ", style="bold bright_green", end="")
         console.print(message, style="white")
     elif style == "info":
-        console.print()
         console.print(message, style="bright_black")
+    elif style == "debug":
+        console.print("*" * 80, style="bright_black")
+        console.print(message, style="bright_black")
+        console.print("*" * 80, style="bright_black")
     elif style == "error":
-        console.print()
         console.print(message, style="red")
         if message.strip():
             logger.error(message)
             return
     else:
-        console.print(message)
+        console.print(f"  {message}", style="bright_black")
 
     if message.strip():
-        logger.info(message)
+        # logger.info(message)
+        pass
 
 
 async def print_heading():

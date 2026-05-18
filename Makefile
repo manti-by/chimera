@@ -1,5 +1,5 @@
-run-odin:
-	uv run main.py --project-name odin
+run-demetra:
+	uv run main.py --project-name demetra
 
 check:
 	git add .
