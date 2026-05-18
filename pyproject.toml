@@ -1,6 +1,6 @@
 [project]
 name = "chimera"
-version = "0.3.0"
+version = "0.3.1"
 description = "AI-powered coding workflow orchestration tool"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
