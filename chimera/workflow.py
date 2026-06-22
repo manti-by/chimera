@@ -10,9 +10,17 @@ from chimera.library.models import WorkflowState
 from chimera.services.linear import get_linear_mcp_config
 from chimera.services.prompt import get_prompt
 from chimera.services.terminal import print_message
-from chimera.settings import GROQ, MAX_BUILD_ATTEMPTS, MAX_REVIEW_ATTEMPTS
+from chimera.services.workflow import (
+    handle_build_agent,
+    handle_git_worktree_create,
+    handle_lint_test,
+    handle_plan_agent,
+    handle_review_agents,
+)
+from chimera.settings import GROQ, HOME_PATH, MAX_BUILD_ATTEMPTS, MAX_REVIEW_ATTEMPTS
 from chimera.tools import get_available_tools
-from chimera.tools.opencode import PLAN_HAS_QUESTIONS, PLAN_HEADER_STRING, PLAN_IS_READY_STRING
+from chimera.tools.opencode import PLAN_HAS_QUESTIONS
+from chimera.utils.workflow import _sync_llm_call, _sync_tool_node
 
 
 async def llm_call(state: WorkflowState, chat_model, tools_by_name: dict) -> dict[str, Any]:
@@ -23,7 +31,7 @@ async def llm_call(state: WorkflowState, chat_model, tools_by_name: dict) -> dic
         project_name=state.project_name,
         worktree_path=str(state.worktree_path)
         if state.worktree_path
-        else f"/home/manti/.chimera/worktrees/opencode/feature/{state.project_name}",
+        else HOME_PATH / f".chimera/worktrees/opencode/feature/{state.project_name}",
         project_path=f"/home/manti/www/{state.project_name}",
     )
     messages: list[BaseMessage] = [SystemMessage(content=system_content)]
@@ -85,51 +93,24 @@ async def tool_node(state: WorkflowState, tools_by_name: dict) -> dict[str, Any]
                 print_message(f"[tool_node/async] Tool error: {observation}")
 
         if tool_name == "build-agent-tool":
-            updates["build_attempts"] = state.build_attempts + 1
-            print_message(f"[tool_node/async] build_attempts: {state.build_attempts} -> {updates['build_attempts']}")
+            res = await handle_build_agent(state, observation)
+            updates.update(res)
 
-        if tool_name == "review-agents-tool":
-            updates["review_attempts"] = state.review_attempts + 1
-            print_message(f"[tool_node/async] review_attempts: {state.review_attempts} -> {updates['review_attempts']}")
-            # Check if review found issues
-            review_text = str(observation).lower()
-            if any(word in review_text for word in ["issue", "error", "fix", "problem", "fail"]):
-                updates["needs_rebuild"] = True
-                print_message("[tool_node/async] Review found issues, setting needs_rebuild=True")
-            else:
-                print_message("[tool_node/async] Review passed")
+        elif tool_name == "review-agents-tool":
+            res = await handle_review_agents(state, observation)
+            updates.update(res)
 
-        if tool_name == "plan-agent-tool":
-            plan_text = str(observation)
-            if PLAN_HAS_QUESTIONS in plan_text:
-                print_message("[tool_node/async] Plan has questions, waiting for user input")
-            elif PLAN_HEADER_STRING in plan_text:
-                header_idx = plan_text.index(PLAN_HEADER_STRING)
-                plan_content = plan_text[header_idx + len(PLAN_HEADER_STRING) :].strip()
-                if PLAN_IS_READY_STRING in plan_content:
-                    plan_content = plan_content.replace(PLAN_IS_READY_STRING, "").strip()
-                updates["implementation_plan"] = plan_content
-                updates["needs_rebuild"] = False
-                print_message(f"[tool_node/async] Extracted implementation plan, length: {len(plan_content)}")
+        elif tool_name == "plan-agent-tool":
+            res = await handle_plan_agent(state, observation)
+            updates.update(res)
 
-        if tool_name == "git-worktree-create-tool":
-            if not str(observation).startswith("Error:"):
-                # Store the worktree path from successful creation
-                try:
-                    from pathlib import Path
+        elif tool_name == "git-worktree-create-tool":
+            res = await handle_git_worktree_create(state, observation)
+            updates.update(res)
 
-                    updates["worktree_path"] = Path(str(observation))
-                    print_message(f"[tool_node/async] Stored worktree_path: {updates['worktree_path']}")
-                except (ValueError, TypeError):
-                    print_message("[tool_node/async] Could not parse worktree_path")
-
-        if tool_name in ["ruff-lint-tool", "pytest-tool"]:
-            if not str(observation).startswith("Error:"):
-                updates["needs_relint"] = False
-                print_message(f"[tool_node/async] {tool_name} passed, setting needs_relint=False")
-            else:
-                updates["needs_rebuild"] = True
-                print_message(f"[tool_node/async] {tool_name} failed, setting needs_rebuild=True")
+        elif tool_name in ["ruff-lint-tool", "pytest-tool"]:
+            res = await handle_lint_test(state, tool_name, observation)
+            updates.update(res)
 
         # Track completed steps
         completed = list(state.completed_steps)
@@ -145,30 +126,8 @@ async def tool_node(state: WorkflowState, tools_by_name: dict) -> dict[str, Any]
     return {"messages": new_messages, **updates}
 
 
-def _sync_llm_call(state: WorkflowState, chat_model, tools_by_name: dict) -> dict[str, Any]:
-    try:
-        result = asyncio.run(llm_call(state, chat_model, tools_by_name))
-        print_message(
-            f"[llm_call] Completed. returning: messages={len(result.get('messages', []))}, llm_calls={result.get('llm_calls', 0)}"
-        )
-        return result
-    except Exception as e:  # noqa: BLE001
-        print_message(f"[llm_call] ERROR: {type(e).__name__}: {e}")
-        raise
-
-
-def _sync_tool_node(state: WorkflowState, tools_by_name: dict) -> dict[str, Any]:
-    print_message(f"[tool_node] Starting. messages: {len(state.messages)}")
-    try:
-        result = asyncio.run(tool_node(state, tools_by_name))
-        print_message(f"[tool_node] Completed. returning: messages={len(result.get('messages', []))}")
-        return result
-    except Exception as e:  # noqa: BLE001
-        print_message(f"[tool_node] ERROR: {type(e).__name__}: {e}")
-        raise
-
-
 def should_continue(state: WorkflowState) -> str:
+
     last_message = state.messages[-1]
     content = str(last_message.content) if hasattr(last_message, "content") else ""
 
